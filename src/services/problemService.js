@@ -59,5 +59,16 @@ async function generateUrlImage(imageBase64) {
 
 };
 
+async function getProblemsDB() {
+    const snapshot = await db.collection("problems").get();
+
+    const problems = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+
+    return problems;
+}
+
 //exports das funções
-module.exports = { createProblemDB };
+module.exports = { createProblemDB, getProblemsDB };
