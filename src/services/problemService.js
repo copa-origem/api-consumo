@@ -1,6 +1,8 @@
 require('dotenv').config();
 const axios = require('axios');
 const db = require("../config/firebase.js");
+const { Timestamp } = require("firebase-admin/firestore");
+const admin = require("firebase-admin");
 const uuidv4 = require("uuid").v4;
 
 //função que cria os problemas
@@ -21,8 +23,9 @@ async function createProblemDB(data) {
         lng,
         lat,
         imageUrl,
-        createAT: new Date(),
-        votes: 0
+        createdAt: new Date(),
+        votes_not_exists: 0,
+        userVotes: []
     };
 
     //aqui os dados são de fato colocados no bd na coleção de problems
@@ -59,16 +62,103 @@ async function generateUrlImage(imageBase64) {
 
 };
 
+// função que pega os problemas no firebase
 async function getProblemsDB() {
+    // variável que pega a coleção problems no banco de dados
     const snapshot = await db.collection("problems").get();
 
+    //variável problems que vai se tornar um objeto de documentos da coleção problems com id
     const problems = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
     }));
 
+    //variável para tratamento de dados expirados
+    let expired_problems = [];
+
+    //dia atual como parâmetro
+    const today = new Date();
+
+    //tratamento de problemas expirados
+    problems.map(async (p, index) => {
+        //pega a diferença dos dias em milisegundos
+        const diffInMs = today - p.createdAt;
+
+        //pega a diferença em dias
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+        //se a problemática existir a 30 dias o problema é excluido
+        if (diffInDays == 30) {
+            expired_problems.push(index);
+            await db.collection("problems").doc(p.id).delete();            
+        }
+
+        //se o problema já obtiver 3 votos de que ele não existe, o problema é excluido
+        if (p.votes_not_exists == 3) {
+            expired_problems.push(index);
+            await db.collection("problems").doc(p.id).delete();
+        }
+    });
+
+    //loop para tirar os problemas expirados do objeto de problems
+    for (let i = 0; i < expired_problems.length; i++) {
+        problems.splice(expired_problems[i]);
+    }
+
+    //retorna os problems
     return problems;
 }
 
+//função que vai gerenciar os votos
+async function voteProblemDB(problemId, uid, status) {
+
+    try {
+        //consulta ao problema específico que foi votado
+        const problemRef = db.collection("problems").doc(problemId);
+        //pega a snapshot do problema referenciado
+        const problemSnap = await problemRef.get();
+
+        //caso  o problema não exista
+        if (!problemSnap.exists) {
+            return { message: "Problema não encontrado" }
+        }
+
+        //se o problema existir pega os dados dele
+        const problemData = problemSnap.data();
+        //faz a verificação pra saber se a pessoa já votou
+        const alreadyVoted = (problemData.userVotes || []).includes(uid);
+
+        //caso a pessoa já tenha votado ela retorna
+        if (alreadyVoted) {
+            return {message: "Você já votou nesse problema"};
+        }
+
+        //se o status do front for de voto para "exists"
+        if (status == "exists") {
+            //fazemos o update da data de criação para resetar o timing e adicionamos seu voto
+            await problemRef.update({
+                createdAt: Timestamp.fromDate(new Date()),
+                userVotes: admin.firestore.FieldValue.arrayUnion(uid)
+            });
+        } else if (status == "not_exists") { //caso o voto seja para "not_exists"
+            //fazemos o update dos votos para not_exists e adicionamos seu voto
+            await problemRef.update({
+                votes_not_exists: admin.firestore.FieldValue.increment(1),
+                userVotes: admin.firestore.FieldValue.arrayUnion(uid)
+            })
+        } else {
+            return {message: "Status não definido"}; //caso o status não seja definido
+        }
+
+        //mensagem de retorno de sucesso
+        return {message: "Voto registrado com sucesso"};
+
+    } catch (error) {
+        console.error(error);
+        return { error: "Erro interno no servidor" };
+
+    }
+}
+
 //exports das funções
-module.exports = { createProblemDB, getProblemsDB };
+module.exports = { createProblemDB, getProblemsDB, voteProblemDB };
