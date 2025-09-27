@@ -2,11 +2,13 @@
 const express = require("express");
 const router = express.Router();
 //funções das rotas
-const { createProblem, getProblems } = require("../controllers/apiController.js");
+const { createProblem, getProblems, voteProblem } = require("../controllers/apiController.js");
+const authenticate = require("../middlewares/authMiddleware.js");
 
-//rota para criar o problema
+//rotas da api
 router.post("/create", createProblem);
 router.get("/get", getProblems);
+router.post("/vote", authenticate, voteProblem)
 
 //export das rotas
 module.exports = router;
