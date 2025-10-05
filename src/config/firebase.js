@@ -1,20 +1,26 @@
 //imports das bibliotecas e funções a serem usadas
 const admin = require("firebase-admin");
-const { readFileSync } = require("fs");
-const path = require("path");
+require('dotenv').config();
 
-//monta o caminho absoluto até o JSON da chave
-const serviceAccountPath = path.join(__dirname, "../../firebase-key.json");
+const serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
+}
 
-//Lê o arquivo JSON e transforma ele em um objeto js
-const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf8"));
-
-//caso o banco de dados não tenha sido iniciado
-if (!admin.apps.length) {
-    //ele inicializa com as credenciais
+try {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
-    })
+    });
+} catch (error) {
+    console.error('Firebase admin initialization error:', error);
 }
 
 //obtém a instância do Firestore
