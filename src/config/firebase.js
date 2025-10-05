@@ -25,5 +25,6 @@ try {
 
 //obtém a instância do Firestore
 const db = admin.firestore();
+db.settings({ ignoreUndefinedProperties: true, experimentalForceLongPolling: true });
 
 module.exports = db;
