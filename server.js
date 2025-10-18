@@ -10,7 +10,7 @@ const PORT = 5000;
 
 //cors que possibilita a interação do frontend com o backend
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: 'https://mapa-origem.vercel.app', 
   credentials: true 
 }));
 
