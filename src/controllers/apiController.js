@@ -1,5 +1,5 @@
 //pega os serviços que vão ser usados
-const { createProblemDB, getProblemsDB, voteProblemDB } =  require("../services/problemService.js");
+const { createProblemDB, getProblemsDB, voteProblemDB, getProblematicasDB } =  require("../services/problemService.js");
 
 // o que a rota vai executar quando for chamada, nesse caso criando o problema
 async function createProblem(req, res) {
@@ -36,5 +36,17 @@ async function voteProblem(req, res) {
     }
 }
 
+async function getProblematicas(req, res) {
+    try {
+        const { nome } = req.query;
+
+        const problematicas = await getProblematicasDB(nome);
+        res.status(201).json(problematicas);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });        
+    }
+}
+
 //export dos modulos
-module.exports = { createProblem, getProblems, voteProblem };
+module.exports = { createProblem, getProblems, voteProblem, getProblematicas };
