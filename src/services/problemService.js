@@ -160,5 +160,24 @@ async function voteProblemDB(problemId, uid, status) {
     }
 }
 
+async function getProblematicasDB(nome) {
+
+    try {
+        const docRef = db.collection("categorias").doc(nome);
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists) {
+            return docSnap.data().problematicas || [];
+        } else {
+            return { error: "Categoria não encontrada"};
+        }
+
+    } catch (error) {
+        console.error(error);
+        return { error: "Erro interno no servidor" };        
+    }
+    
+}
+
 //exports das funções
-module.exports = { createProblemDB, getProblemsDB, voteProblemDB };
+module.exports = { createProblemDB, getProblemsDB, voteProblemDB, getProblematicasDB };
