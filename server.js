@@ -10,7 +10,7 @@ const PORT = 5000;
 
 //cors que possibilita a interação do frontend com o backend
 app.use(cors({
-  origin: 'https://mapa-origem.vercel.app', 
+  origin: 'https://client-next-beta.vercel.app', 
   credentials: true 
 }));
 

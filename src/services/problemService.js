@@ -8,7 +8,7 @@ const uuidv4 = require("uuid").v4;
 //função que cria os problemas
 async function createProblemDB(data) {
     //variáveis que virão da requisição
-    const { type, description, lng, lat, image } = data;
+    const { type, description, lng, lat, image, uid } = data;
 
     //caso uma imagem seja atribuída a problemática
     let imageUrl = "";
@@ -23,7 +23,8 @@ async function createProblemDB(data) {
         lng,
         lat,
         imageUrl,
-        createdAt: new Date(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
         votes_not_exists: 0,
         userVotes: []
     };
@@ -63,10 +64,17 @@ async function generateUrlImage(imageBase64) {
 };
 
 // função que pega os problemas no firebase
-async function getProblemsDB() {
+async function getProblemsDB( uid ) {
     // variável que pega a coleção problems no banco de dados
-    const snapshot = await db.collection("problems").get();
-
+    let snapshot;
+    if (uid.uid) {
+        snapshot = await db.collection("problems").where("uid", "==", uid.uid).get();
+    } else {
+        snapshot = await db.collection("problems").get();
+    }
+        /*
+    console.log(uid.uid)
+    const snapshot = await db.collection("problems").get();*/
     //variável problems que vai se tornar um objeto de documentos da coleção problems com id
     const problems = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -179,5 +187,15 @@ async function getProblematicasDB(nome) {
     
 }
 
+async function deleteprobemDB(id) {
+    try {
+        const docRef = db.collection("problems").doc(id);
+        await docRef.delete();
+    } catch (error) {
+        console.error('Erro ao deletar documento:', error);
+        return { error: error.message };
+    }
+}
+
 //exports das funções
-module.exports = { createProblemDB, getProblemsDB, voteProblemDB, getProblematicasDB };
+module.exports = { createProblemDB, getProblemsDB, voteProblemDB, getProblematicasDB, deleteprobemDB };
