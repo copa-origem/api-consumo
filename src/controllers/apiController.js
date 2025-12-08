@@ -1,5 +1,5 @@
 //pega os serviços que vão ser usados
-const { createProblemDB, getProblemsDB, voteProblemDB } =  require("../services/problemService.js");
+const { createProblemDB, getProblemsDB, voteProblemDB, getProblematicasDB, deleteprobemDB } =  require("../services/problemService.js");
 
 // o que a rota vai executar quando for chamada, nesse caso criando o problema
 async function createProblem(req, res) {
@@ -15,7 +15,12 @@ async function createProblem(req, res) {
 
 async function getProblems(req, res) {
     try {
-        const problems = await getProblemsDB(); //linha responsável por montar o problema no bd
+        let problems;
+        if (req.query) {
+            problems = await getProblemsDB(req.query)
+        } else  {
+            problems = await getProblemsDB(); //linha responsável por montar o problema no bd
+        }
         res.status(201).json(problems);
         
     } catch (error) {
@@ -36,5 +41,31 @@ async function voteProblem(req, res) {
     }
 }
 
+async function getProblematicas(req, res) {
+    try {
+        const { nome } = req.query;
+
+        const problematicas = await getProblematicasDB(nome);
+        res.status(201).json(problematicas);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });        
+    }
+}
+
+async function deleteproblem(req, res) {
+    try {
+        const { id } = req.body;
+
+        console.log(id);
+
+        const deletar = await deleteprobemDB(id);
+        res.status(201).json({ message: "deletado!" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message })
+    }
+}
+
 //export dos modulos
-module.exports = { createProblem, getProblems, voteProblem };
+module.exports = { createProblem, getProblems, voteProblem, getProblematicas, deleteproblem };
