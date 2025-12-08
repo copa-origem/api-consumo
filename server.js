@@ -2,7 +2,7 @@ require('dotenv').config();
 //variáveis das bibliotecas 
 const express = require("express");
 const cors = require("cors");
-const apiRoutes = require("./routes/apiRoutes");
+const apiRoutes = require("./src/routes/apiRoutes");
 
 //atribuição do app ao express e a porta do servidor
 const app = express();
